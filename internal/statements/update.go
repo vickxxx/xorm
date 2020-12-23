@@ -120,8 +120,17 @@ func (statement *Statement) BuildUpdates(tableValue reflect.Value,
 
 		if fieldValue.CanAddr() {
 			// 判断自定义类型是否为零值
-			if !requiredField && utils.IsStructZero(fieldValue) {
+			if !requiredField && fieldValue.IsZero() {
 				continue
+			}
+
+			if fieldType.ConvertibleTo(schemas.TimeType) {
+				t := fieldValue.Convert(schemas.TimeType).Interface().(time.Time)
+				if !requiredField && (t.IsZero() || !fieldValue.IsValid()) {
+					continue
+				}
+				val = dialects.FormatColumnTime(statement.dialect, statement.defaultTimeZone, col, t)
+				goto APPEND
 			}
 
 			if structConvert, ok := fieldValue.Addr().Interface().(convert.Conversion); ok {
