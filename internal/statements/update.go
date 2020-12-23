@@ -119,6 +119,11 @@ func (statement *Statement) BuildUpdates(tableValue reflect.Value,
 		var val interface{}
 
 		if fieldValue.CanAddr() {
+			// 判断自定义类型是否为零值
+			if !requiredField && utils.IsStructZero(fieldValue) {
+				continue
+			}
+
 			if structConvert, ok := fieldValue.Addr().Interface().(convert.Conversion); ok {
 				data, err := structConvert.ToDB()
 				if err != nil {
