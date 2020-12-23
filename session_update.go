@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"xorm.io/builder"
 	"xorm.io/xorm/caches"
@@ -192,6 +193,15 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 
 		for _, v := range bValue.MapKeys() {
 			colNames = append(colNames, session.engine.Quote(v.String())+" = ?")
+
+			fieldType := reflect.TypeOf(bValue.MapIndex(v).Interface())
+			if fieldType.ConvertibleTo(schemas.TimeType) { // 是否可以转换为时间类型
+				fieldValue := reflect.ValueOf(bean.(map[string]interface{})[v.String()])
+				t := fieldValue.Convert(schemas.TimeType).Interface().(time.Time)
+				args = append(args, t)
+				continue
+			}
+
 			args = append(args, bValue.MapIndex(v).Interface())
 		}
 	} else {
